@@ -1,0 +1,7 @@
+<templates>
+	<t t-name="diagrams_net_widget">
+		<div class="diagrams-net-container">
+			<img id="img1"/>
+		</div>
+	</t>
+</templates>

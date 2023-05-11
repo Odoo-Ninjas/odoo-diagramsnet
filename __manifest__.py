@@ -1,0 +1,12 @@
+{   'application': False,
+    'author': 'Marc Wimmer (marc@itewimmer.de)',
+    'css': ['static/css/diagrams_net.scss'],
+    'data': ['views/assets.xml'],
+    'demo': [],
+    'depends': ['web'],
+    'external_dependencies': {'bin': [], 'python': []},
+    'name': 'diagrams_net',
+    'qweb': ['static/xml/diagrams_net.xml'],
+    'test': [],
+    'version': '13.0.1.0',
+    'web': True}
