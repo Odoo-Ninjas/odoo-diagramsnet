@@ -1,13 +1,13 @@
-From 91d79a29d78a2dcd47d1c32158e1d599d2b931c6 Mon Sep 17 00:00:00 2001
+From 3af85887b131e3d88539ecd43a8c266c7d9842e9 Mon Sep 17 00:00:00 2001
 From: Marc Wimmer <marc@itewimmer.de>
-Date: Thu, 25 May 2023 18:24:12 +0200
+Date: Fri, 26 May 2023 00:23:25 +0200
 Subject: [PATCH] for patch
 
 ---
  __manifest__.py                       |  27 +++---
- static/src/diagrams_net.js            | 100 +++++++++++++++++++++++
+ static/src/diagrams_net.js            |  98 ++++++++++++++++++++++
  static/{css => src}/diagrams_net.scss |   0
- static/src/diagrams_net.xml           |  10 +++
+ static/src/diagrams_net.xml           |  12 +++
  static/src/js/diagrams_net.js         | 113 --------------------------
  static/xml/diagrams_net.xml           |   7 --
  6 files changed, 125 insertions(+), 132 deletions(-)
@@ -51,14 +51,14 @@ index d40ff56e..fada74b7 100644
 +}
 diff --git a/static/src/diagrams_net.js b/static/src/diagrams_net.js
 new file mode 100644
-index 00000000..b7ee5705
+index 00000000..5e5ffdcc
 --- /dev/null
 +++ b/static/src/diagrams_net.js
-@@ -0,0 +1,100 @@
+@@ -0,0 +1,98 @@
 +/** @odoo-module **/
 +
 +import { registry } from "@web/core/registry";
-+import { Component, xml, useRef, onMounted, onWillUnmount, onWillUpdateProps, useState } from "@odoo/owl";
++import { Component, xml, useRef, onMounted, onWillUnmount, useState } from "@odoo/owl";
 +import { TextField } from '@web/views/fields/text/text_field';
 +import { standardFieldProps } from "@web/views/fields/standard_field_props";
 +
@@ -68,73 +68,64 @@ index 00000000..b7ee5705
 +    }
 +    setup() {
 +        this.rootRef = useRef("container");
++        this.state = useState({
++            url1: "",
++            url2: "",
++            image_data: "",
++        });
 +        this.img = useRef("img1");
 +        this.iframe1 = useRef("iframe1");
 +        this.iframe2 = useRef("iframe2");
 +        onMounted(this.onMounted);
 +        onWillUnmount(this.onWillunmount);
-+        onWillUpdateProps(this.onWillUpdateProps);
 +    }
 +    onMounted() {
 +        this.handler = window.addEventListener(
-+            'message', this.message_received.bind(this), false);
-+        this.iframe1.el.src = this.iframe_url();
-+
++            'message', (e) => this.message_received(e), false);
++        this.state.url1 = this.iframe_url();
 +    }
 +    onWillunmount() {
 +        window.removeEventListener('message', this.handler);
-+
-+    }
-+    onWillUpdateProps(payload) {
-+        debugger;
 +    }
 +
 +    iframe_url() {
 +        return "https://embed.diagrams.net/?proto=json&client=0&ready=message&embed=1";
 +    }
-+    message_received(evt) {
-+        debugger;
-+        return;
-+        debugger;
-+        console.log(evt.data);
-+        var self = this;
-+
++    async message_received(evt) {
 +        if (!evt.data) {
 +            return;
 +        }
 +        var data = JSON.parse(evt.data);
 +        if (data.event == 'init') {
-+            if (!self.xml_content) {
-+                self.iframe1[0].contentWindow.postMessage(JSON.stringify({
++            if (!this.props.xml_content) {
++                this.iframe1.el.contentWindow.postMessage(JSON.stringify({
 +                    action: "load",
 +                    descriptor: {
 +                        format: "csv",
-+                        data: self.value,
++                        data: this.props.value,
 +                    }
 +                }), '*');
 +            }
 +            else {
-+                if (self.iframe2 && self.iframe2[0].contentWindow) {
-+                    self.iframe2[0].contentWindow.postMessage(JSON.stringify({
++                if (this.iframe2 && this.iframe2.el.contentWindow) {
++                    this.iframe2.el.contentWindow.postMessage(JSON.stringify({
 +                        action: "load",
 +                        descriptor: {
 +                            format: "xml",
-+                            data: this.xml_content,
++                            data: this.props.xml_content,
 +                        }
 +                    }), '*');
 +                }
 +            }
 +        }
 +        else if (data.event == 'load') {
-+            if (!this.xml_content) {
-+                this.xml_content = data.xml;
-+                this.iframe1.css("height", "1800px");
-+                this.iframe1.remove();
-+                this.iframe2.prop("src", this.iframe_url());
++            if (!this.props.xml_content) {
++                this.props.xml_content = data.xml;
++                this.state.url2 = this.iframe_url();
 +            }
 +            else {
-+                if (this.iframe2 && this.iframe2[0].contentWindow) {
-+                    this.iframe2[0].contentWindow.postMessage(JSON.stringify({
++                if (this.iframe2 && this.iframe2.el.contentWindow) {
++                    this.iframe2.el.contentWindow.postMessage(JSON.stringify({
 +                        action: "export",
 +                        format: "url",
 +                    }), '*');
@@ -142,16 +133,23 @@ index 00000000..b7ee5705
 +            }
 +        }
 +        else if (data.event == 'export') {
-+            this.iframe2.remove()
-+            this.img.prop("src", data.data);
++            this.state.url2 = '';
++            console.log(data.data);
++            this.state.image_data = data.data;
 +        }
 +    }
 +}
 +Diagram.template = "diagrams_net.diagrams_net_widget";
 +Diagram.supportedTypes = ["text", "html"];
 +Diagram.displayName = "Diagram";
++Diagram.defaultProps = {
++    xml_content: null,
++    image_data: "",
++};
 +Diagram.props = {
 +    ...standardFieldProps,
++    xml_content: { type: String, optional: true, },
++    image_data: { type: String, optional: true, },
 +};
 +
 +registry.category("fields").add("diagrams_net", Diagram);
@@ -162,17 +160,19 @@ rename from static/css/diagrams_net.scss
 rename to static/src/diagrams_net.scss
 diff --git a/static/src/diagrams_net.xml b/static/src/diagrams_net.xml
 new file mode 100644
-index 00000000..ff8f9947
+index 00000000..93f15eab
 --- /dev/null
 +++ b/static/src/diagrams_net.xml
-@@ -0,0 +1,10 @@
+@@ -0,0 +1,12 @@
 +<?xml version="1.0" encoding="UTF-8"?>
 +<templates id="template" xml:space="preserve">
 +	<t t-name="diagrams_net.diagrams_net_widget" owl="1">
 +		<div class="diagrams-net-container" t-ref="container">
-+			<iframe t-ref="iframe1"/>
-+			<iframe t-ref="iframe2"/>
-+			<img id="img1" t-ref='img1'/>
++			<img t-ref='img1' t-att-src="state.image_data"/>
++			<div style="display: none;">
++				<iframe t-ref="iframe1" t-if="state.url1" t-att-src="state.url1" style="height: 1800px;"/>
++				<iframe t-ref="iframe2" t-if="state.url2" t-att-src="state.url2"/>
++			</div>
 +		</div>
 +	</t>
 +</templates>
