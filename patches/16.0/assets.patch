@@ -1,47 +1,234 @@
-From 25fb9cd41d7094eadf27206472310a93cb4a1175 Mon Sep 17 00:00:00 2001
+From e5c0698b3c12ef05da00db2fdcb6e44e8385efbb Mon Sep 17 00:00:00 2001
 From: Marc Wimmer <marc@itewimmer.de>
-Date: Thu, 25 May 2023 11:16:29 +0200
+Date: Thu, 25 May 2023 17:11:51 +0200
 Subject: [PATCH] for patch
 
 ---
- __manifest__.py  | 6 ++++--
- views/assets.xml | 7 -------
- 2 files changed, 4 insertions(+), 9 deletions(-)
- delete mode 100644 addons/diagrams_net/views/assets.xml
+ static/js/diagrams_net.js   | 184 ++++++++++++++++++------------------
+ static/xml/diagrams_net.xml |   2 +-
+ 2 files changed, 92 insertions(+), 94 deletions(-)
 
-diff --git a/__manifest__.py b/__manifest__.py
-index d40ff56e..002b54bc 100644
---- a/__manifest__.py
-+++ b/__manifest__.py
-@@ -1,12 +1,14 @@
- {   'application': False,
-+    'assets': {   'web.assets_backend': [   'diagrams_net/static/css/diagrams_net.scss',
-+                                            'diagrams_net/static/js/diagrams_net.js'],
-+                  'web.assets_qweb': [   'diagrams_net/static/xml/diagrams_net.xml']},
-     'author': 'Marc Wimmer (marc@itewimmer.de)',
-     'css': ['static/css/diagrams_net.scss'],
--    'data': ['views/assets.xml'],
-+    'data': [],
-     'demo': [],
-     'depends': ['web'],
-     'external_dependencies': {'bin': [], 'python': []},
-     'name': 'diagrams_net',
--    'qweb': ['static/xml/diagrams_net.xml'],
-     'test': [],
-     'version': '13.0.1.0',
-     'web': True}
-diff --git a/views/assets.xml b/views/assets.xml
-deleted file mode 100644
-index 65feaadf..00000000
---- a/views/assets.xml
-+++ /dev/null
-@@ -1,7 +0,0 @@
--<odoo><data>
--    <template id="assets_backend" inherit_id="web.assets_backend">
--        <xpath expr="." position="inside">
--        <link rel="stylesheet" href="/diagrams_net/static/css/diagrams_net.scss"/><script type="text/javascript" src="/diagrams_net/static/js/diagrams_net.js"/></xpath>
--    </template>
--    </data>
--    </odoo>
+diff --git a/static/js/diagrams_net.js b/static/js/diagrams_net.js
+index 635b3429..e5182e57 100644
+--- a/static/js/diagrams_net.js
++++ b/static/js/diagrams_net.js
+@@ -1,113 +1,111 @@
+-odoo.define("diagrams.net.widget", function(require) {
++/** @odoo-module **/
+ 
+-    var AbstractField = require('web.AbstractField');
+-    var core = require('web.core');
+-    var QWeb = require('web.QWeb');
+-    var field_registry = require('web.field_registry');
++import { registry } from "@web/core/registry";
++import { BooleanField } from "@web/views/fields/boolean/boolean_field";
++import { Component, xml } from "@odoo/owl";
+ 
+-    //override existing
+-    var SourceCodeViewer = AbstractField.extend({
+-        template: 'diagrams_net_widget',
+-        init: function() {
+-            this._super.apply(this, arguments);
+-        },
+-        destroy: function() {
+-            this._super.apply(this, arguments);
+-        },
+-        start: function() {
+-            res = this._super.apply(this, arguments);
+-            var self = this;
+-        },
+-        destroy: function() {
+-            debugger;
+-            this._super.apply(this, arguments);
+-            if (this.handler) {
+-                document.body.removeEventListener(
+-                    'message', this.message_received);
+-            };
++//override existing
++class SourceCodeViewer extends= AbstractField {
+ 
+-        },
+-        _render: function() {
+ 
+-            var self = this;
++    template: 'diagrams_net_widget',
++    init() {
++        this._super.apply(this, arguments);
++    }
++    destroy() {
++        this._super.apply(this, arguments);
++    },
++    start() {
++        res = this._super.apply(this, arguments);
++        var self = this;
++    },
++    destroy() {
++        this._super.apply(this, arguments);
++        if (this.handler) {
++            document.body.removeEventListener(
++                'message', this.message_received);
++        };
+ 
+-            self._super.apply(this, arguments);
+-            window.addEventListener(
+-                'message', self.message_received.bind(self), false);
++    },
++    _render() {
+ 
+-            if (!self.iframe1) {
+-                self.iframe1 = self._makeiframe();
+-            }
+-            if (!self.iframe2) {
+-                self.iframe2 = self._makeiframe();
+-            }
+-            self.img = self.$el.find("#img1");
+-            self.xml_content = "";
++        var self = this;
++
++        self._super.apply(this, arguments);
++        window.addEventListener(
++            'message', self.message_received.bind(self), false);
+ 
+-            self.iframe1.prop('src', self.iframe_url());
++        if (!self.iframe1) {
++            self.iframe1 = self._makeiframe();
++        }
++        if (!self.iframe2) {
++            self.iframe2 = self._makeiframe();
++        }
++        self.img = self.$el.find("#img1");
++        self.xml_content = "";
+ 
+-        },
+-        _makeiframe: function() {
+-            var $res = $("<iframe/>").appendTo($("body"));
+-            $res.hide();
+-            return $res;
+-        },
+-        iframe_url: function() {
+-            return "https://embed.diagrams.net/?proto=json&client=0&ready=message&embed=1";
+-        },
+-        message_received: function(evt) {
+-            console.log(evt.data);
+-            var self = this;
++        self.iframe1.prop('src', self.iframe_url());
+ 
+-            if (!evt.data) {
+-                return;
++    }
++    _makeiframe() {
++        var $res = $("<iframe/>").appendTo($("body"));
++        $res.hide();
++        return $res;
++    }
++    iframe_url() {
++        return "https://embed.diagrams.net/?proto=json&client=0&ready=message&embed=1";
++    }
++    message_received(evt) {
++        console.log(evt.data);
++        var self = this;
++
++        if (!evt.data) {
++            return;
++        }
++        var data = JSON.parse(evt.data);
++        if (data.event == 'init') {
++            if (!self.xml_content) {
++                self.iframe1[0].contentWindow.postMessage(JSON.stringify({
++                    action: "load",
++                    descriptor: {
++                        format: "csv",
++                        data: self.value,
++                    }
++                }), '*');
+             }
+-            var data = JSON.parse(evt.data);
+-            if (data.event == 'init') {
+-                if (!self.xml_content) {
+-                    self.iframe1[0].contentWindow.postMessage(JSON.stringify({
++            else {
++                if (self.iframe2 && self.iframe2[0].contentWindow) {
++                    self.iframe2[0].contentWindow.postMessage(JSON.stringify({
+                         action: "load",
+                         descriptor: {
+-                            format: "csv",
+-                            data: self.value,
++                            format: "xml",
++                            data: this.xml_content,
+                         }
+                     }), '*');
+                 }
+-                else {
+-                    if (self.iframe2 && self.iframe2[0].contentWindow) {
+-                        self.iframe2[0].contentWindow.postMessage(JSON.stringify({
+-                            action: "load",
+-                            descriptor: {
+-                                format: "xml",
+-                                data: this.xml_content,
+-                            }
+-                        }), '*');
+-                    }
+-                }
+             }
+-            else if (data.event == 'load') {
+-                if (!this.xml_content) {
+-                    this.xml_content = data.xml;
+-                    this.iframe1.css("height", "1800px");
+-                    this.iframe1.remove();
+-                    this.iframe2.prop("src", this.iframe_url());
+-                }
+-                else {
+-                    if (this.iframe2 && this.iframe2[0].contentWindow) {
+-                        this.iframe2[0].contentWindow.postMessage(JSON.stringify({
+-                            action: "export",
+-                            format: "url",
+-                        }), '*');
+-                    }
+-                }
++        }
++        else if (data.event == 'load') {
++            if (!this.xml_content) {
++                this.xml_content = data.xml;
++                this.iframe1.css("height", "1800px");
++                this.iframe1.remove();
++                this.iframe2.prop("src", this.iframe_url());
+             }
+-            else if (data.event == 'export') {
+-                this.iframe2.remove()
+-                this.img.prop("src", data.data);
++            else {
++                if (this.iframe2 && this.iframe2[0].contentWindow) {
++                    this.iframe2[0].contentWindow.postMessage(JSON.stringify({
++                        action: "export",
++                        format: "url",
++                    }), '*');
++                }
+             }
+         }
+-    });
+-    field_registry.add('diagrams_net', SourceCodeViewer); // as form widget
+-    return SourceCodeViewer;
++        else if (data.event == 'export') {
++            this.iframe2.remove()
++            this.img.prop("src", data.data);
++        }
++    }
++}
+ 
+-});
+\ No newline at end of file
++registry.category("fields").add("diagrams_net", SourceCodeViewer);
+\ No newline at end of file
+diff --git a/static/xml/diagrams_net.xml b/static/xml/diagrams_net.xml
+index f324fa09..6a76e06c 100644
+--- a/static/xml/diagrams_net.xml
++++ b/static/xml/diagrams_net.xml
+@@ -1,5 +1,5 @@
+ <templates>
+-	<t t-name="diagrams_net_widget">
++	<t t-name="diagrams_net_widget" owl="1">
+ 		<div class="diagrams-net-container">
+ 			<img id="img1"/>
+ 		</div>
 -- 
 2.34.1
