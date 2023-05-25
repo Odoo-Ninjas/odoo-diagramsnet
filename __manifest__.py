@@ -1,7 +1,7 @@
 {   'application': False,
     'author': 'Marc Wimmer (marc@itewimmer.de)',
     'css': ['static/css/diagrams_net.scss'],
-    'data': ['gimera.yml', 'views/assets.xml'],
+    'data': ['views/assets.xml'],
     'demo': [],
     'depends': ['web'],
     'external_dependencies': {'bin': [], 'python': []},
