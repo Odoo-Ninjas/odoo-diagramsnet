@@ -1,0 +1,46 @@
+From e0b96248758c46eb328b89f5fd15e62aad1f12ef Mon Sep 17 00:00:00 2001
+From: Marc Wimmer <marc@itewimmer.de>
+Date: Thu, 25 May 2023 10:29:09 +0200
+Subject: [PATCH] for patch
+
+---
+ __manifest__.py  | 4 +++-
+ views/assets.xml | 7 -------
+ 2 files changed, 3 insertions(+), 8 deletions(-)
+ delete mode 100644 addons/diagrams_net/views/assets.xml
+
+diff --git a/__manifest__.py b/__manifest__.py
+index ac3ff028..0835b496 100644
+--- a/__manifest__.py
++++ b/__manifest__.py
+@@ -1,4 +1,7 @@
+ {   'application': False,
++    'assets': {   'web.assets_backend': [   'diagrams_net/static/css/diagrams_net.scss',
++                                            'diagrams_net/static/js/diagrams_net.js'],
++                  'web.assets_qweb': [   'diagrams_net/static/xml/diagrams_net.xml']},
+     'author': 'Marc Wimmer (marc@itewimmer.de)',
+     'css': ['static/css/diagrams_net.scss'],
+     'data': ['gimera.yml', 'views/assets.xml'],
+@@ -6,7 +9,6 @@
+     'depends': ['web'],
+     'external_dependencies': {'bin': [], 'python': []},
+     'name': 'diagrams_net',
+-    'qweb': ['static/xml/diagrams_net.xml'],
+     'test': [],
+     'version': '13.0.1.0',
+     'web': True}
+diff --git a/views/assets.xml b/views/assets.xml
+deleted file mode 100644
+index 65feaadf..00000000
+--- a/views/assets.xml
++++ /dev/null
+@@ -1,7 +0,0 @@
+-<odoo><data>
+-    <template id="assets_backend" inherit_id="web.assets_backend">
+-        <xpath expr="." position="inside">
+-        <link rel="stylesheet" href="/diagrams_net/static/css/diagrams_net.scss"/><script type="text/javascript" src="/diagrams_net/static/js/diagrams_net.js"/></xpath>
+-    </template>
+-    </data>
+-    </odoo>
+-- 
+2.34.1
