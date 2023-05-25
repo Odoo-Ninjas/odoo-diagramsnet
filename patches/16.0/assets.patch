@@ -1,16 +1,16 @@
-From 3af85887b131e3d88539ecd43a8c266c7d9842e9 Mon Sep 17 00:00:00 2001
+From cb789dbef5e411e3f5f3cf83f32e03e11d3fba58 Mon Sep 17 00:00:00 2001
 From: Marc Wimmer <marc@itewimmer.de>
-Date: Fri, 26 May 2023 00:23:25 +0200
+Date: Fri, 26 May 2023 00:42:34 +0200
 Subject: [PATCH] for patch
 
 ---
  __manifest__.py                       |  27 +++---
- static/src/diagrams_net.js            |  98 ++++++++++++++++++++++
+ static/src/diagrams_net.js            |  95 ++++++++++++++++++++++
  static/{css => src}/diagrams_net.scss |   0
  static/src/diagrams_net.xml           |  12 +++
  static/src/js/diagrams_net.js         | 113 --------------------------
  static/xml/diagrams_net.xml           |   7 --
- 6 files changed, 125 insertions(+), 132 deletions(-)
+ 6 files changed, 122 insertions(+), 132 deletions(-)
  create mode 100644 addons/diagrams_net/static/src/diagrams_net.js
  rename addons/diagrams_net/static/{css => src}/diagrams_net.scss (100%)
  create mode 100644 addons/diagrams_net/static/src/diagrams_net.xml
@@ -51,10 +51,10 @@ index d40ff56e..fada74b7 100644
 +}
 diff --git a/static/src/diagrams_net.js b/static/src/diagrams_net.js
 new file mode 100644
-index 00000000..5e5ffdcc
+index 00000000..a0b32ecc
 --- /dev/null
 +++ b/static/src/diagrams_net.js
-@@ -0,0 +1,98 @@
+@@ -0,0 +1,95 @@
 +/** @odoo-module **/
 +
 +import { registry } from "@web/core/registry";
@@ -71,6 +71,7 @@ index 00000000..5e5ffdcc
 +        this.state = useState({
 +            url1: "",
 +            url2: "",
++            xml_content: "",
 +            image_data: "",
 +        });
 +        this.img = useRef("img1");
@@ -97,7 +98,7 @@ index 00000000..5e5ffdcc
 +        }
 +        var data = JSON.parse(evt.data);
 +        if (data.event == 'init') {
-+            if (!this.props.xml_content) {
++            if (!this.state.xml_content) {
 +                this.iframe1.el.contentWindow.postMessage(JSON.stringify({
 +                    action: "load",
 +                    descriptor: {
@@ -112,15 +113,15 @@ index 00000000..5e5ffdcc
 +                        action: "load",
 +                        descriptor: {
 +                            format: "xml",
-+                            data: this.props.xml_content,
++                            data: this.state.xml_content,
 +                        }
 +                    }), '*');
 +                }
 +            }
 +        }
 +        else if (data.event == 'load') {
-+            if (!this.props.xml_content) {
-+                this.props.xml_content = data.xml;
++            if (!this.state.xml_content) {
++                this.state.xml_content = data.xml;
 +                this.state.url2 = this.iframe_url();
 +            }
 +            else {
@@ -143,13 +144,9 @@ index 00000000..5e5ffdcc
 +Diagram.supportedTypes = ["text", "html"];
 +Diagram.displayName = "Diagram";
 +Diagram.defaultProps = {
-+    xml_content: null,
-+    image_data: "",
 +};
 +Diagram.props = {
 +    ...standardFieldProps,
-+    xml_content: { type: String, optional: true, },
-+    image_data: { type: String, optional: true, },
 +};
 +
 +registry.category("fields").add("diagrams_net", Diagram);
