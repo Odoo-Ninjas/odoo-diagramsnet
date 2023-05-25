@@ -1,7 +1,4 @@
 {   'application': False,
-    'assets': {   'web.assets_backend': [   'diagrams_net/static/css/diagrams_net.scss',
-                                            'diagrams_net/static/js/diagrams_net.js'],
-                  'web.assets_qweb': [   'diagrams_net/static/xml/diagrams_net.xml']},
     'author': 'Marc Wimmer (marc@itewimmer.de)',
     'css': ['static/css/diagrams_net.scss'],
     'data': ['gimera.yml', 'views/assets.xml'],
@@ -9,6 +6,7 @@
     'depends': ['web'],
     'external_dependencies': {'bin': [], 'python': []},
     'name': 'diagrams_net',
+    'qweb': ['static/xml/diagrams_net.xml'],
     'test': [],
     'version': '13.0.1.0',
     'web': True}
