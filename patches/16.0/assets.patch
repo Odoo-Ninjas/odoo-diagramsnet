@@ -1,99 +1,101 @@
-From bfb89f0b75bc94b26901a90a467468c1646389b8 Mon Sep 17 00:00:00 2001
+From 91d79a29d78a2dcd47d1c32158e1d599d2b931c6 Mon Sep 17 00:00:00 2001
 From: Marc Wimmer <marc@itewimmer.de>
-Date: Thu, 25 May 2023 17:14:32 +0200
+Date: Thu, 25 May 2023 18:24:12 +0200
 Subject: [PATCH] for patch
 
 ---
- __manifest__.py           |   6 ++-
- static/js/diagrams_net.js | 111 ++++++++++++++++++++++++++++++++++++++
- 2 files changed, 115 insertions(+), 2 deletions(-)
- create mode 100644 addons/diagrams_net/static/js/diagrams_net.js
+ __manifest__.py                       |  27 +++---
+ static/src/diagrams_net.js            | 100 +++++++++++++++++++++++
+ static/{css => src}/diagrams_net.scss |   0
+ static/src/diagrams_net.xml           |  10 +++
+ static/src/js/diagrams_net.js         | 113 --------------------------
+ static/xml/diagrams_net.xml           |   7 --
+ 6 files changed, 125 insertions(+), 132 deletions(-)
+ create mode 100644 addons/diagrams_net/static/src/diagrams_net.js
+ rename addons/diagrams_net/static/{css => src}/diagrams_net.scss (100%)
+ create mode 100644 addons/diagrams_net/static/src/diagrams_net.xml
+ delete mode 100644 addons/diagrams_net/static/src/js/diagrams_net.js
+ delete mode 100644 addons/diagrams_net/static/xml/diagrams_net.xml
 
 diff --git a/__manifest__.py b/__manifest__.py
-index d40ff56e..e5bb2008 100644
+index d40ff56e..fada74b7 100644
 --- a/__manifest__.py
 +++ b/__manifest__.py
-@@ -1,12 +1,14 @@
- {   'application': False,
-+    'assets': {   'web.assets_backend': [   'diagrams_net/static/css/diagrams_net.scss',
-+                                            'diagrams_net/static/src/js/diagrams_net.js'],
-+                  'web.assets_qweb': [   'diagrams_net/static/xml/diagrams_net.xml']},
-     'author': 'Marc Wimmer (marc@itewimmer.de)',
-     'css': ['static/css/diagrams_net.scss'],
+@@ -1,12 +1,15 @@
+-{   'application': False,
+-    'author': 'Marc Wimmer (marc@itewimmer.de)',
+-    'css': ['static/css/diagrams_net.scss'],
 -    'data': ['views/assets.xml'],
-+    'data': [],
-     'demo': [],
-     'depends': ['web'],
-     'external_dependencies': {'bin': [], 'python': []},
-     'name': 'diagrams_net',
+-    'demo': [],
+-    'depends': ['web'],
+-    'external_dependencies': {'bin': [], 'python': []},
+-    'name': 'diagrams_net',
 -    'qweb': ['static/xml/diagrams_net.xml'],
-     'test': [],
-     'version': '13.0.1.0',
-     'web': True}
-diff --git a/static/js/diagrams_net.js b/static/js/diagrams_net.js
+-    'test': [],
+-    'version': '13.0.1.0',
+-    'web': True}
++{
++    "application": False,
++    "assets": {
++        "web.assets_backend": ["diagrams_net/static/src/**/*"],
++    },
++    "author": "Marc Wimmer (marc@itewimmer.de)",
++    "data": [],
++    "demo": [],
++    "depends": ["web"],
++    "external_dependencies": {"bin": [], "python": []},
++    "name": "diagrams_net",
++    "test": [],
++    "version": "16.0.1.0",
++    "web": True,
++}
+diff --git a/static/src/diagrams_net.js b/static/src/diagrams_net.js
 new file mode 100644
-index 00000000..e5182e57
+index 00000000..b7ee5705
 --- /dev/null
-+++ b/static/js/diagrams_net.js
-@@ -0,0 +1,111 @@
++++ b/static/src/diagrams_net.js
+@@ -0,0 +1,100 @@
 +/** @odoo-module **/
 +
 +import { registry } from "@web/core/registry";
-+import { BooleanField } from "@web/views/fields/boolean/boolean_field";
-+import { Component, xml } from "@odoo/owl";
++import { Component, xml, useRef, onMounted, onWillUnmount, onWillUpdateProps, useState } from "@odoo/owl";
++import { TextField } from '@web/views/fields/text/text_field';
++import { standardFieldProps } from "@web/views/fields/standard_field_props";
 +
-+//override existing
-+class SourceCodeViewer extends= AbstractField {
-+
-+
-+    template: 'diagrams_net_widget',
-+    init() {
-+        this._super.apply(this, arguments);
++class Diagram extends Component {
++    get isReadonly() {
++        return true;
 +    }
-+    destroy() {
-+        this._super.apply(this, arguments);
-+    },
-+    start() {
-+        res = this._super.apply(this, arguments);
-+        var self = this;
-+    },
-+    destroy() {
-+        this._super.apply(this, arguments);
-+        if (this.handler) {
-+            document.body.removeEventListener(
-+                'message', this.message_received);
-+        };
-+
-+    },
-+    _render() {
-+
-+        var self = this;
-+
-+        self._super.apply(this, arguments);
-+        window.addEventListener(
-+            'message', self.message_received.bind(self), false);
-+
-+        if (!self.iframe1) {
-+            self.iframe1 = self._makeiframe();
-+        }
-+        if (!self.iframe2) {
-+            self.iframe2 = self._makeiframe();
-+        }
-+        self.img = self.$el.find("#img1");
-+        self.xml_content = "";
-+
-+        self.iframe1.prop('src', self.iframe_url());
++    setup() {
++        this.rootRef = useRef("container");
++        this.img = useRef("img1");
++        this.iframe1 = useRef("iframe1");
++        this.iframe2 = useRef("iframe2");
++        onMounted(this.onMounted);
++        onWillUnmount(this.onWillunmount);
++        onWillUpdateProps(this.onWillUpdateProps);
++    }
++    onMounted() {
++        this.handler = window.addEventListener(
++            'message', this.message_received.bind(this), false);
++        this.iframe1.el.src = this.iframe_url();
 +
 +    }
-+    _makeiframe() {
-+        var $res = $("<iframe/>").appendTo($("body"));
-+        $res.hide();
-+        return $res;
++    onWillunmount() {
++        window.removeEventListener('message', this.handler);
++
 +    }
++    onWillUpdateProps(payload) {
++        debugger;
++    }
++
 +    iframe_url() {
 +        return "https://embed.diagrams.net/?proto=json&client=0&ready=message&embed=1";
 +    }
 +    message_received(evt) {
++        debugger;
++        return;
++        debugger;
 +        console.log(evt.data);
 +        var self = this;
 +
@@ -145,8 +147,169 @@ index 00000000..e5182e57
 +        }
 +    }
 +}
++Diagram.template = "diagrams_net.diagrams_net_widget";
++Diagram.supportedTypes = ["text", "html"];
++Diagram.displayName = "Diagram";
++Diagram.props = {
++    ...standardFieldProps,
++};
 +
-+registry.category("fields").add("diagrams_net", SourceCodeViewer);
++registry.category("fields").add("diagrams_net", Diagram);
+\ No newline at end of file
+diff --git a/static/css/diagrams_net.scss b/static/src/diagrams_net.scss
+similarity index 100%
+rename from static/css/diagrams_net.scss
+rename to static/src/diagrams_net.scss
+diff --git a/static/src/diagrams_net.xml b/static/src/diagrams_net.xml
+new file mode 100644
+index 00000000..ff8f9947
+--- /dev/null
++++ b/static/src/diagrams_net.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<templates id="template" xml:space="preserve">
++	<t t-name="diagrams_net.diagrams_net_widget" owl="1">
++		<div class="diagrams-net-container" t-ref="container">
++			<iframe t-ref="iframe1"/>
++			<iframe t-ref="iframe2"/>
++			<img id="img1" t-ref='img1'/>
++		</div>
++	</t>
++</templates>
+\ No newline at end of file
+diff --git a/static/src/js/diagrams_net.js b/static/src/js/diagrams_net.js
+deleted file mode 100644
+index 635b3429..00000000
+--- a/static/src/js/diagrams_net.js
++++ /dev/null
+@@ -1,113 +0,0 @@
+-odoo.define("diagrams.net.widget", function(require) {
+-
+-    var AbstractField = require('web.AbstractField');
+-    var core = require('web.core');
+-    var QWeb = require('web.QWeb');
+-    var field_registry = require('web.field_registry');
+-
+-    //override existing
+-    var SourceCodeViewer = AbstractField.extend({
+-        template: 'diagrams_net_widget',
+-        init: function() {
+-            this._super.apply(this, arguments);
+-        },
+-        destroy: function() {
+-            this._super.apply(this, arguments);
+-        },
+-        start: function() {
+-            res = this._super.apply(this, arguments);
+-            var self = this;
+-        },
+-        destroy: function() {
+-            debugger;
+-            this._super.apply(this, arguments);
+-            if (this.handler) {
+-                document.body.removeEventListener(
+-                    'message', this.message_received);
+-            };
+-
+-        },
+-        _render: function() {
+-
+-            var self = this;
+-
+-            self._super.apply(this, arguments);
+-            window.addEventListener(
+-                'message', self.message_received.bind(self), false);
+-
+-            if (!self.iframe1) {
+-                self.iframe1 = self._makeiframe();
+-            }
+-            if (!self.iframe2) {
+-                self.iframe2 = self._makeiframe();
+-            }
+-            self.img = self.$el.find("#img1");
+-            self.xml_content = "";
+-
+-            self.iframe1.prop('src', self.iframe_url());
+-
+-        },
+-        _makeiframe: function() {
+-            var $res = $("<iframe/>").appendTo($("body"));
+-            $res.hide();
+-            return $res;
+-        },
+-        iframe_url: function() {
+-            return "https://embed.diagrams.net/?proto=json&client=0&ready=message&embed=1";
+-        },
+-        message_received: function(evt) {
+-            console.log(evt.data);
+-            var self = this;
+-
+-            if (!evt.data) {
+-                return;
+-            }
+-            var data = JSON.parse(evt.data);
+-            if (data.event == 'init') {
+-                if (!self.xml_content) {
+-                    self.iframe1[0].contentWindow.postMessage(JSON.stringify({
+-                        action: "load",
+-                        descriptor: {
+-                            format: "csv",
+-                            data: self.value,
+-                        }
+-                    }), '*');
+-                }
+-                else {
+-                    if (self.iframe2 && self.iframe2[0].contentWindow) {
+-                        self.iframe2[0].contentWindow.postMessage(JSON.stringify({
+-                            action: "load",
+-                            descriptor: {
+-                                format: "xml",
+-                                data: this.xml_content,
+-                            }
+-                        }), '*');
+-                    }
+-                }
+-            }
+-            else if (data.event == 'load') {
+-                if (!this.xml_content) {
+-                    this.xml_content = data.xml;
+-                    this.iframe1.css("height", "1800px");
+-                    this.iframe1.remove();
+-                    this.iframe2.prop("src", this.iframe_url());
+-                }
+-                else {
+-                    if (this.iframe2 && this.iframe2[0].contentWindow) {
+-                        this.iframe2[0].contentWindow.postMessage(JSON.stringify({
+-                            action: "export",
+-                            format: "url",
+-                        }), '*');
+-                    }
+-                }
+-            }
+-            else if (data.event == 'export') {
+-                this.iframe2.remove()
+-                this.img.prop("src", data.data);
+-            }
+-        }
+-    });
+-    field_registry.add('diagrams_net', SourceCodeViewer); // as form widget
+-    return SourceCodeViewer;
+-
+-});
+\ No newline at end of file
+diff --git a/static/xml/diagrams_net.xml b/static/xml/diagrams_net.xml
+deleted file mode 100644
+index f324fa09..00000000
+--- a/static/xml/diagrams_net.xml
++++ /dev/null
+@@ -1,7 +0,0 @@
+-<templates>
+-	<t t-name="diagrams_net_widget">
+-		<div class="diagrams-net-container">
+-			<img id="img1"/>
+-		</div>
+-	</t>
+-</templates>
 \ No newline at end of file
 -- 
 2.34.1
