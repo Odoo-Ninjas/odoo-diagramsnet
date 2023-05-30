@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+	<t t-name="diagrams_net.diagrams_net_widget" owl="1">
+		<div class="diagrams-net-container" t-ref="container">
+			<img t-ref='img1' t-att-src="state.image_data"/>
+			<div style="display: none;">
+				<iframe t-ref="iframe1" t-if="state.url1" t-att-src="state.url1" style="height: 1800px;"/>
+				<iframe t-ref="iframe2" t-if="state.url2" t-att-src="state.url2"/>
+			</div>
+		</div>
+	</t>
+</templates>
