@@ -21,7 +21,7 @@ odoo.define("diagrams.net.widget", function(require) {
                 this.$el.empty();
             }
             var fielddata = JSON.parse(this.recordData[this.name]);
-            if (!fielddata.nodes.length) {
+            if (!fielddata || !fielddata.nodes.length) {
                 return;
             }
             const data = {
