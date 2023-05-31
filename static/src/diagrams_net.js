@@ -91,16 +91,16 @@ export class Diagram extends owl.Component {
         const options = {
             // Fix the seed to have always the same result for the same graph
             layout: {
-                randomSeed: undefined, improvedLayout: false, clusterThreshold: 150,
+                randomSeed: 100,
+                improvedLayout: true,
+                clusterThreshold: 120,
                 hierarchical: {
-                    enabled: true,
+                    enabled: false,
                     direction: "LR",
                     edgeMinimization: true,
                     parentCentralization: true,
 
                     levelSeparation: 150,
-                    blockShifting: true,
-
                     nodeSpacing: 100,
                 },
             },
@@ -137,6 +137,10 @@ export class Diagram extends owl.Component {
                 var resId = params.nodes[0];
                 self.openItem(resId);
             }
+            else if (params.edges.length > 0) {
+                var resId = params.edges[0];
+                self.openItem(resId, 'of.connection');
+            }
         });
         this.network = network;
         if (this.props.value.selected_ids) {
@@ -144,20 +148,23 @@ export class Diagram extends owl.Component {
                 network.selectNodes(this.props.value.selected_ids);
             }
         }
-        //this.network.moveTo({scale: 1.5})
     }
 
-    async openItem(item_id) {
-        debugger;
+    async openItem(item_id, force_model) {
+        var self = this;
         const action = await this.orm.call(
             this.model,
             "open_diagram_item",
-            [[this.props.value.res_id], item_id],
+            [[this.props.value.res_id], item_id, force_model || 'of.base.item'],
             {
                 context: this.context,
             }
         );
-        await this.action.doAction(action);
+        await this.action.doAction(action, {
+            onClose: () => {
+                self.action.doAction({type: 'ir.actions.client', tag: 'reload'});
+            }
+        });
     }
 
     _fitNetwork() {
