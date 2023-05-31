@@ -6,7 +6,7 @@ odoo.define("diagrams.net.widget", function(require) {
     var field_registry = require('web.field_registry');
 
     //override existing
-    var SourceCodeViewer = AbstractField.extend({
+    var Diagram = AbstractField.extend({
         template: 'diagrams_net_widget',
         _render: function() {
 
@@ -20,36 +20,13 @@ odoo.define("diagrams.net.widget", function(require) {
             if (this.network) {
                 this.$el.empty();
             }
-            var fielddata = this.recordData[this.name];
-            let nodes = fielddata.nodes || [];
-            if (!nodes.length) {
+            var fielddata = JSON.parse(this.recordData[this.name]);
+            if (!fielddata.nodes.length) {
                 return;
             }
-            nodes = nodes.map((node) => {
-                return {
-                    id: node[0],
-                    label: node[1],
-                    title: node[1],
-                    shape: node[2],
-                    color: node[3],
-                    title: node[4],
-                }
-            });
-
-            const edges = [];
-            _.each(fielddata.edges || [], function (edge) {
-                edges.push({
-                    id: edge[0],
-                    from: edge[1],
-                    to: edge[2],
-                    label: edge[3],
-                    arrows: "to",
-                });
-            });
-
             const data = {
-                nodes: new vis.DataSet(nodes),
-                edges: new vis.DataSet(edges),
+                nodes: new vis.DataSet(fielddata.nodes),
+                edges: new vis.DataSet(fielddata.edges),
             };
             const options = {
                 // Fix the seed to have always the same result for the same graph
@@ -83,25 +60,35 @@ odoo.define("diagrams.net.widget", function(require) {
                 },
                 interaction: {
                     navigationButtons: false,
-                    keyboard: true,
+                    keyboard: false,
                     hover: true,
                     zoomView: true,
                     dragView: true,
                     selectable: true,
-                    dragNodes: false,
+                    dragNodes: true,
                 },
             };
             const network = await new vis.Network(this.$el[0], data, options);
+            click_handlers = {
+                nodes: {},
+                edges: {},
+            };
+            _.each(fielddata.nodes, (node) => {
+                click_handlers.nodes[node.id] = node.onclick;
+            });
+            _.each(fielddata.edges, (edge) => {
+                click_handlers.edges[edge.id] = edge.onclick;
+            });
 
             var self = this;
             network.on("click", function (params) {
                 if (params.nodes.length > 0) {
-                    var resId = params.nodes[0];
-                    self.openItem(self, resId);
+                    var nodeid = params.nodes[0];
+                    self.openItem(self, click_handlers.nodes[nodeid]);
                 }
                 else if (params.edges.length > 0) {
-                    var resId = params.edges[0];
-                    self.openItem(self, resId, 'of.connection');
+                    var edgeid = params.edges[0];
+                    self.openItem(self, click_handlers.edges[edgeid]);
                 }
             });
             this.network = network;
@@ -110,25 +97,24 @@ odoo.define("diagrams.net.widget", function(require) {
                     let selids = _.map(fielddata.selected_ids, (x) => {
                         return x;
                     });
-                    console.log(selids);
                     network.selectNodes(selids);
                 }
             }
             this._fitNetwork();
         },
-        async openItem(self, item_id, force_model) {
+        async openItem(self, clickhandler) {
             debugger;
             const action = await self._rpc({
-                model: self.model,
-                method: "open_diagram_item",
-                args: [[self.recordData.id], item_id, force_model],
+                model: clickhandler.model,
+                method: clickhandler.method,
+                args: [[clickhandler.res_id]],
                 kwargs: {
                     context: self.context,
                 }}
             );
             await this.do_action(action, {
-                onClose: () => {
-                    self.action.doAction({type: 'ir.actions.client', tag: 'reload'});
+                on_close: () => {
+                    self.do_action({type: 'ir.actions.client', tag: 'reload'});
                 }
             });
         },
@@ -145,7 +131,7 @@ odoo.define("diagrams.net.widget", function(require) {
             }
         }
     });
-    field_registry.add('diagrams_net', SourceCodeViewer); // as form widget
-    return SourceCodeViewer;
+    field_registry.add('diagrams_net', Diagram); // as form widget
+    return Diagram;
 
 });
