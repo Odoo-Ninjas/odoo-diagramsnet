@@ -103,7 +103,6 @@ odoo.define("diagrams.net.widget", function(require) {
             this._fitNetwork();
         },
         async openItem(self, clickhandler) {
-            debugger;
             const action = await self._rpc({
                 model: clickhandler.model,
                 method: clickhandler.method,
