@@ -8,102 +8,132 @@ odoo.define("diagrams.net.widget", function(require) {
     //override existing
     var SourceCodeViewer = AbstractField.extend({
         template: 'diagrams_net_widget',
-        init: function() {
-            this._super.apply(this, arguments);
-        },
-        destroy: function() {
-            this._super.apply(this, arguments);
-        },
-        start: function() {
-            res = this._super.apply(this, arguments);
-            var self = this;
-        },
-        destroy: function() {
-            debugger;
-            this._super.apply(this, arguments);
-            if (this.handler) {
-                document.body.removeEventListener(
-                    'message', this.message_received);
-            };
-
-        },
         _render: function() {
 
             var self = this;
-
             self._super.apply(this, arguments);
-            window.addEventListener(
-                'message', self.message_received.bind(self), false);
+            this.renderNetwork()
 
-            if (!self.iframe1) {
-                self.iframe1 = self._makeiframe();
+
+        },
+        async renderNetwork() {
+            if (this.network) {
+                this.$el.empty();
             }
-            if (!self.iframe2) {
-                self.iframe2 = self._makeiframe();
-            }
-            self.img = self.$el.find("#img1");
-            self.xml_content = "";
-
-            self.iframe1.prop('src', self.iframe_url());
-
-        },
-        _makeiframe: function() {
-            var $res = $("<iframe/>").appendTo($("body"));
-            $res.hide();
-            return $res;
-        },
-        iframe_url: function() {
-            return "https://embed.diagrams.net/?proto=json&client=0&ready=message&embed=1";
-        },
-        message_received: function(evt) {
-            console.log(evt.data);
-            var self = this;
-
-            if (!evt.data) {
+            var fielddata = this.recordData[this.name];
+            let nodes = fielddata.nodes || [];
+            if (!nodes.length) {
                 return;
             }
-            var data = JSON.parse(evt.data);
-            if (data.event == 'init') {
-                if (!self.xml_content) {
-                    self.iframe1[0].contentWindow.postMessage(JSON.stringify({
-                        action: "load",
-                        descriptor: {
-                            format: "csv",
-                            data: self.value,
-                        }
-                    }), '*');
+            nodes = nodes.map((node) => {
+                return {
+                    id: node[0],
+                    label: node[1],
+                    title: node[1],
+                    shape: node[2],
+                    color: node[3],
                 }
-                else {
-                    if (self.iframe2 && self.iframe2[0].contentWindow) {
-                        self.iframe2[0].contentWindow.postMessage(JSON.stringify({
-                            action: "load",
-                            descriptor: {
-                                format: "xml",
-                                data: this.xml_content,
-                            }
-                        }), '*');
-                    }
+            });
+
+            const edges = [];
+            _.each(fielddata.edges || [], function (edge) {
+                edges.push({
+                    id: edge[0],
+                    from: edge[1],
+                    to: edge[2],
+                    label: edge[3],
+                    arrows: "to",
+                });
+            });
+
+            const data = {
+                nodes: new vis.DataSet(nodes),
+                edges: new vis.DataSet(edges),
+            };
+            const options = {
+                // Fix the seed to have always the same result for the same graph
+                layout: {
+                    randomSeed: 100,
+                    improvedLayout: true,
+                    clusterThreshold: 120,
+                    hierarchical: {
+                        enabled: false,
+                        direction: "LR",
+                        edgeMinimization: true,
+                        parentCentralization: true,
+
+                        levelSeparation: 150,
+                        nodeSpacing: 100,
+                    },
+                },
+                clickToUse: false,
+                autoResize: false,
+                physics: true,
+                height: '500px',
+                width: '100%',
+                nodes: {
+                    size: 20,
+                    shadow: true,
+                    margin: 5,
+                    widthConstraint: {
+                        minimum: 150,
+                        maximum: 250,
+                    },
+                },
+                interaction: {
+                    navigationButtons: false,
+                    keyboard: true,
+                    hover: true,
+                    zoomView: true,
+                    dragView: true,
+                    selectable: true,
+                    dragNodes: false,
+                },
+            };
+            const network = await new vis.Network(this.$el[0], data, options);
+
+            var self = this;
+            network.on("click", function (params) {
+                if (params.nodes.length > 0) {
+                    var resId = params.nodes[0];
+                    self.openItem(self, resId);
+                }
+                else if (params.edges.length > 0) {
+                    var resId = params.edges[0];
+                    self.openItem(self, resId, 'of.connection');
+                }
+            });
+            this.network = network;
+            if (fielddata.selected_ids) {
+                if (fielddata.selected_ids.length) {
+                    network.selectNodes(this.props.value.selected_ids);
                 }
             }
-            else if (data.event == 'load') {
-                if (!this.xml_content) {
-                    this.xml_content = data.xml;
-                    this.iframe1.css("height", "1800px");
-                    this.iframe1.remove();
-                    this.iframe2.prop("src", this.iframe_url());
+            this._fitNetwork();
+        },
+        async openItem(self, item_id, force_model) {
+            debugger;
+            const action = await self._rpc({
+                model: self.model,
+                method: "open_diagram_item",
+                args: [[self.recordData.id], item_id, force_model || 'of.base.item'],
+                kwargs: {
+                    context: self.context,
+                }}
+            );
+            await this.do_action(action, {
+                onClose: () => {
+                    self.action.doAction({type: 'ir.actions.client', tag: 'reload'});
                 }
-                else {
-                    if (this.iframe2 && this.iframe2[0].contentWindow) {
-                        this.iframe2[0].contentWindow.postMessage(JSON.stringify({
-                            action: "export",
-                            format: "url",
-                        }), '*');
-                    }
-                }
-            }
-            else if (data.event == 'export') {
-                this.iframe2.remove()
-                this.img.prop("src", data.data);
+            });
+        },
+        _fitNetwork() {
+            if (this.network) {
+                var self = this;
+                this.network.fit();
+                setTimeout(function() {
+                    self.network.fit();
+                }, 100);
             }
         }
     });

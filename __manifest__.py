@@ -1,6 +1,7 @@
 {   'application': False,
     'author': 'Marc Wimmer (marc@itewimmer.de)',
-    'css': ['static/css/diagrams_net.scss'],
+    'css': [   'static/css/diagrams_net.scss',
+               'static/lib/vis/vis-network.min.css'],
     'data': ['views/assets.xml'],
     'demo': [],
     'depends': ['web'],
