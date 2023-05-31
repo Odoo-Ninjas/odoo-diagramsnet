@@ -32,6 +32,7 @@ odoo.define("diagrams.net.widget", function(require) {
                     title: node[1],
                     shape: node[2],
                     color: node[3],
+                    title: node[4],
                 }
             });
 
