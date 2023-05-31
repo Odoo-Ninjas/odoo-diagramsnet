@@ -31,17 +31,17 @@ odoo.define("diagrams.net.widget", function(require) {
             const options = {
                 // Fix the seed to have always the same result for the same graph
                 layout: {
-                    randomSeed: 100,
-                    improvedLayout: true,
+                    randomSeed: 1,
+                    improvedLayout: false,
                     clusterThreshold: 120,
                     hierarchical: {
                         enabled: false,
                         direction: "LR",
-                        edgeMinimization: true,
-                        parentCentralization: true,
+                        edgeMinimization: false,
+                        parentCentralization: false,
 
                         levelSeparation: 150,
-                        nodeSpacing: 100,
+                        nodeSpacing: 200,
                     },
                 },
                 clickToUse: false,
@@ -50,7 +50,7 @@ odoo.define("diagrams.net.widget", function(require) {
                 height: '500px',
                 width: '100%',
                 nodes: {
-                    size: 20,
+                    size: 30,
                     shadow: true,
                     margin: 5,
                     widthConstraint: {
