@@ -107,7 +107,11 @@ odoo.define("diagrams.net.widget", function(require) {
             this.network = network;
             if (fielddata.selected_ids) {
                 if (fielddata.selected_ids.length) {
-                    network.selectNodes(this.props.value.selected_ids);
+                    let selids = _.map(fielddata.selected_ids, (x) => {
+                        return x;
+                    });
+                    console.log(selids);
+                    network.selectNodes(selids);
                 }
             }
             this._fitNetwork();
@@ -117,7 +121,7 @@ odoo.define("diagrams.net.widget", function(require) {
             const action = await self._rpc({
                 model: self.model,
                 method: "open_diagram_item",
-                args: [[self.recordData.id], item_id, force_model || 'of.base.item'],
+                args: [[self.recordData.id], item_id, force_model],
                 kwargs: {
                     context: self.context,
                 }}
@@ -134,6 +138,9 @@ odoo.define("diagrams.net.widget", function(require) {
                 this.network.fit();
                 setTimeout(function() {
                     self.network.fit();
+                    setTimeout(function() {
+                        self.network.fit();
+                    }, 500);
                 }, 100);
             }
         }
