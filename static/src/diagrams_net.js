@@ -59,49 +59,28 @@ export class Diagram extends owl.Component {
         if (this.network) {
             this.$el.empty();
         }
-        let nodes = this.props.value.nodes || [];
-        if (!nodes.length) {
+        var fielddata = JSON.parse(this.props.value);
+        if (!fielddata || !fielddata.nodes.length) {
             return;
         }
-        nodes = nodes.map((node) => {
-            return {
-                id: node[0],
-                label: node[1],
-                title: node[1],
-                shape: node[2],
-                color: node[3],
-            }
-        });
-
-        const edges = [];
-        _.each(this.props.value.edges || [], function (edge) {
-            edges.push({
-                id: edge[0],
-                from: edge[1],
-                to: edge[2],
-                label: edge[3],
-                arrows: "to",
-            });
-        });
-
         const data = {
-            nodes: new vis.DataSet(nodes),
-            edges: new vis.DataSet(edges),
+            nodes: new vis.DataSet(fielddata.nodes),
+            edges: new vis.DataSet(fielddata.edges),
         };
         const options = {
             // Fix the seed to have always the same result for the same graph
             layout: {
-                randomSeed: 100,
-                improvedLayout: true,
+                randomSeed: 1,
+                improvedLayout: false,
                 clusterThreshold: 120,
                 hierarchical: {
                     enabled: false,
                     direction: "LR",
-                    edgeMinimization: true,
-                    parentCentralization: true,
+                    edgeMinimization: false,
+                    parentCentralization: false,
 
                     levelSeparation: 150,
-                    nodeSpacing: 100,
+                    nodeSpacing: 200,
                 },
             },
             clickToUse: false,
@@ -110,7 +89,7 @@ export class Diagram extends owl.Component {
             height: '1000px',
             width: '1000px',
             nodes: {
-                size: 20,
+                size: 30,
                 shadow: true,
                 margin: 5,
                 widthConstraint: {
@@ -128,34 +107,43 @@ export class Diagram extends owl.Component {
                 dragNodes: false,
             },
         };
-        console.log(data);
-        const network = new vis.Network(this.$el[0], data, options);
+        const network = await new vis.Network(this.$el[0], data, options);
+        click_handlers = {
+            nodes: {},
+            edges: {},
+        };
+        _.each(fielddata.nodes, (node) => {
+            click_handlers.nodes[node.id] = node.onclick;
+        });
+        _.each(fielddata.edges, (edge) => {
+            click_handlers.edges[edge.id] = edge.onclick;
+        });
 
         var self = this;
         network.on("click", function (params) {
             if (params.nodes.length > 0) {
-                var resId = params.nodes[0];
-                self.openItem(resId);
+                var nodeid = params.nodes[0];
+                self.openItem(self, click_handlers.nodes[nodeid]);
             }
             else if (params.edges.length > 0) {
-                var resId = params.edges[0];
-                self.openItem(resId, 'of.connection');
+                var edgeid = params.edges[0];
+                self.openItem(self, click_handlers.edges[edgeid]);
             }
         });
         this.network = network;
-        if (this.props.value.selected_ids) {
-            if (this.props.value.selected_ids.length) {
-                network.selectNodes(this.props.value.selected_ids);
+        if (fielddata.selected_ids) {
+            if (fielddata.selected_ids.length) {
+                network.selectNodes(fielddata.selected_ids);
             }
         }
     }
 
-    async openItem(item_id, force_model) {
+    async openItem(item_id, clickhandler) {
         var self = this;
         const action = await this.orm.call(
-            this.model,
-            "open_diagram_item",
-            [[this.props.value.res_id], item_id, force_model || 'of.base.item'],
+            clickhandler.model,
+            clickhandler.method,
+            [[clickhandler.res_id]],
             {
                 context: this.context,
             }
@@ -168,13 +156,17 @@ export class Diagram extends owl.Component {
     }
 
     _fitNetwork() {
-        if (this.network) {
-            this.network.fit({
-                nodes: this.network.body.nodeIndices,
-                minZoomLevel: 1.0,
-                maxZoomLevel: 1.3
-            });
+        if (!this.network) {
+            return;
         }
+        var self = this;
+        this.network.fit();
+        setTimeout(function() {
+            self.network.fit();
+            setTimeout(function() {
+                self.network.fit();
+            }, 500);
+        }, 100);
     }
 }
 
