@@ -106,7 +106,7 @@ export class Diagram extends owl.Component {
             },
         };
         const network = await new vis.Network(this.$el[0], data, options);
-        click_handlers = {
+        let click_handlers = {
             nodes: {},
             edges: {},
         };
