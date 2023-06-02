@@ -1,5 +1,4 @@
 /** @odoo-module **/
-/* @odoo-module */
 /* global vis */
 
 import { loadCSS, loadJS } from "@web/core/assets";
@@ -23,7 +22,6 @@ export class Diagram extends owl.Component {
         });
         useEffect(() => {
             this.renderNetwork();
-            this._fitNetwork();
             return () => {
                 if (this.network) {
                     this.$el.empty();
@@ -55,7 +53,7 @@ export class Diagram extends owl.Component {
         return container;
     }
 
-    renderNetwork() {
+    async renderNetwork() {
         if (this.network) {
             this.$el.empty();
         }
