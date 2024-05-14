@@ -65,7 +65,6 @@ odoo.define("diagrams_net.fields", function (require) {
             return container;
         },
         _render: function () {
-            debugger;
             var self = this;
             this.$el.empty();
 
@@ -84,9 +83,9 @@ odoo.define("diagrams_net.fields", function (require) {
             });
 
             var edges = [];
-            _.each(this.value.edges || [], function (edge) {
-                var edgeFrom = edge[0];
-                var edgeTo = edge[1];
+            _.each(fielddata.edges || [], function (edge) {
+                var edgeFrom = edge.from;
+                var edgeTo = edge.to;
                 edges.push({
                     from: edgeFrom,
                     to: edgeTo,
@@ -115,8 +114,8 @@ odoo.define("diagrams_net.fields", function (require) {
                     },
                 },
                 clickToUse: false,
-                autoResize: false,
-                physics: false,
+                autoResize: true,
+                physics: true,
                 height: '400px',
                 width: '1000px',
                 nodes: {
@@ -133,7 +132,7 @@ odoo.define("diagrams_net.fields", function (require) {
                     keyboard: false,
                     hover: true,
                     zoomView: false,
-                    dragView: false,
+                    dragView: true,
                     selectable: true,
                     dragNodes: false,
                 },
@@ -141,12 +140,12 @@ odoo.define("diagrams_net.fields", function (require) {
             var network = new vis.Network(this.$el[0], data, options);
             network.selectNodes([this.res_id]);
 
-            // network.on("dragging", function () {
-            //     // By default, dragging changes the selected node
-            //     // to the dragged one, we want to keep the current
-            //     // job selected
-            //     network.selectNodes([self.res_id]);
-            // });
+            network.on("dragging", function () {
+                // By default, dragging changes the selected node
+                // to the dragged one, we want to keep the current
+                // job selected
+                network.selectNodes([self.res_id]);
+            });
 
             let click_handlers = {
                 nodes: {},
@@ -172,6 +171,7 @@ odoo.define("diagrams_net.fields", function (require) {
                 }
             });
             this.network = network;
+            this.centerNetwork();
         },
         openItem(item_id, clickhandler) {
             var self = this;
@@ -203,6 +203,31 @@ odoo.define("diagrams_net.fields", function (require) {
             }).then(function (action) {
                 self.trigger_up("do_action", { action: action });
             });
+        },
+        centerNetwork: function() {
+            // Assuming 'container' is the DOM element where the network is rendered
+            debugger;
+            
+            let container = this.$el[0];
+            var self = this;
+
+            function center() {
+                var containerWidth = container.offsetWidth;
+                var containerHeight = container.offsetHeight;
+                if (!containerWidth) {
+                    return;
+                }
+                clearInterval(handle);
+                var scale = 1.0;
+                self.network.moveTo({
+                    offset: {
+                        x: (0.5 * containerWidth) * scale,
+                        y: (0.5 * containerHeight) * scale
+                    },
+                    scale: scale
+                });
+            }
+            let handle = setInterval(center, 50);
         },
     });
 
