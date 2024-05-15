@@ -83,8 +83,8 @@ export class Diagram extends owl.Component {
             },
             clickToUse: false,
             autoResize: false,
-            physics: false,
-            height: '1000px',
+            physics: true,
+            height: '400px',
             width: '1000px',
             nodes: {
                 size: 30,
