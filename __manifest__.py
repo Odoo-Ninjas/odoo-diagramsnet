@@ -1,13 +1,9 @@
 {
     "application": False,
-    "assets": {
-        "web.assets_backend": [
-            "diagrams_net/static/src/**/*",
-        ],
-        "web.assets_qweb": ["diagrams_net/static/src/diagrams_net.xml"],
-    },
-    "author": "Marc Wimmer (marc@itewimmer.de)",
-    "data": [],
+    "author": "Marc Wimmer (marc@zebroo.de)",
+    'css': [   'static/css/diagrams_net.scss',
+               'static/lib/vis/vis-network.min.css'],
+    "data": ["views/assets.xml"],
     "demo": [],
     "depends": ["web"],
     "external_dependencies": {"bin": [], "python": []},
@@ -15,4 +11,5 @@
     "test": [],
     "version": "1.0",
     "web": True,
+    "qweb": ["static/src/diagrams_net.xml"],
 }
