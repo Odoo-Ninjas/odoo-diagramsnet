@@ -96,6 +96,7 @@ odoo.define("diagrams_net.fields", function (require) {
                 var edgeFrom = edge.from;
                 var edgeTo = edge.to;
                 edges.push({
+                    id: edge.id,
                     from: edgeFrom,
                     to: edgeTo,
                     arrows: "to",
@@ -214,8 +215,6 @@ odoo.define("diagrams_net.fields", function (require) {
         },
         centerNetwork: function() {
             // Assuming 'container' is the DOM element where the network is rendered
-            debugger;
-            
             let container = this.$el[0];
             var self = this;
 
