@@ -32,10 +32,19 @@ odoo.define("diagrams_net.fields", function (require) {
 
             return def;
         },
-        _fitNetwork: function () {
-            if (this.network) {
-                this.network.fit(this.network.body.nodeIndices);
+        _fitNetwork() {
+            if (!this.network) {
+                return;
             }
+            //this.network.fit(this.network.body.nodeIndices);
+            var self = this;
+            this.network.fit(self.network.body.nodeIndices);
+            setTimeout(function() {
+                self.network.fit();
+                setTimeout(function() {
+                    self.network.fit(self.network.body.nodeIndices);
+                }, 500);
+            }, 100);
         },
         /*
          * Add a listener on tabs if any: when the widget is render inside a tab,
@@ -171,7 +180,6 @@ odoo.define("diagrams_net.fields", function (require) {
                 }
             });
             this.network = network;
-            this.centerNetwork();
         },
         openItem(item_id, clickhandler) {
             var self = this;
