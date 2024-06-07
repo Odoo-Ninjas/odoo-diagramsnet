@@ -148,7 +148,7 @@ odoo.define("diagrams_net.fields", function (require) {
                 },
             };
             var network = new vis.Network(this.$el[0], data, options);
-            network.selectNodes([this.res_id]);
+            network.selectNodes(fielddata.selected_ids);
 
             network.on("dragging", function () {
                 // By default, dragging changes the selected node
