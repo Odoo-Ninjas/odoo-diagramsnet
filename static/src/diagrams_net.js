@@ -181,6 +181,7 @@ odoo.define("diagrams_net.fields", function (require) {
                 }
             });
             this.network = network;
+            self._fitNetwork();
         },
         openItem(item_id, clickhandler) {
             var self = this;
