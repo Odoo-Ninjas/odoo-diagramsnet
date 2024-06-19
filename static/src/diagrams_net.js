@@ -150,12 +150,12 @@ odoo.define("diagrams_net.fields", function (require) {
             var network = new vis.Network(this.$el[0], data, options);
             network.selectNodes(fielddata.selected_ids);
 
-            network.on("dragging", function () {
-                // By default, dragging changes the selected node
-                // to the dragged one, we want to keep the current
-                // job selected
-                network.selectNodes([self.res_id]);
-            });
+            // network.on("dragging", function () {
+            //     // By default, dragging changes the selected node
+            //     // to the dragged one, we want to keep the current
+            //     // job selected
+            //     network.selectNodes([self.res_id]);
+            // });
 
             let click_handlers = {
                 nodes: {},
