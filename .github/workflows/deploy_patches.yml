@@ -3,7 +3,7 @@ name: Deploy fixes to other versions with rebase main
 on:
   push:
     branches:
-      - "main"
+      - "14.0"
 
 permissions: write-all
 
@@ -13,7 +13,7 @@ jobs:
     secrets: inherit
     with:
       repo_url: git@github.com:Odoo-Ninjas/odoo-diagramsnet.git
-      branches: "15.0:main 16.0:main 17.0:main"
+      branches: "13.0:14.0"
       
 
   
