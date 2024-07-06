@@ -7,10 +7,18 @@ import { standardFieldProps } from "@web/views/fields/standard_field_props";
 import { useService } from "@web/core/utils/hooks";
 import { xml, onMounted, onWillUpdateProps, useState } from "@odoo/owl";
 import { TextField } from '@web/views/fields/text/text_field';
+import { useRecordObserver } from "@web/model/relational_model/utils";
 
-const { Component, onWillStart, useEffect, useRef } = owl;
+const { Component, onWillStart, useEffect, useRef, onWillRender } = owl;
 
 export class Diagram extends owl.Component {
+    static template = "diagrams_net.diagrams_net_widget";
+    static displayName = "Diagram";
+    static defaultProps = {
+    };
+    static props = {
+        ...standardFieldProps,
+    };
     setup() {
         this.orm = useService("orm");
         this.action = useService("action");
@@ -19,16 +27,16 @@ export class Diagram extends owl.Component {
         onWillStart(async () => {
             await loadJS("/diagrams_net/static/lib/vis/vis-network.min.js");
             loadCSS("/diagrams_net/static/lib/vis/vis-network.min.css");
+            console.log("Start");
+        });
+        onWillRender(() => {
+            console.log("Will render");
+            this.renderNetwork();
         });
         useEffect(() => {
+            console.log("Use effect");
             this.renderNetwork();
-            return () => {
-                if (this.network) {
-                    this.$el.empty();
-                }
-                return this.rootRef.el;
-            };
-        });
+        }, () => [this.props]);
     }
 
     get $el() {
@@ -40,7 +48,7 @@ export class Diagram extends owl.Component {
     }
 
     get context() {
-        return this.props.record.getFieldContext(this.props.name);
+        return this.props.record.context;
     }
 
     get model() {
@@ -57,7 +65,9 @@ export class Diagram extends owl.Component {
         if (this.network) {
             this.$el.empty();
         }
-        var fielddata = JSON.parse(this.props.value);
+        const record = this.props.record;
+        const value = record.data[this.props.name];
+        var fielddata = JSON.parse(value || '{"nodes": [], "edges": []}');
         if (!fielddata || !fielddata.nodes.length) {
             return;
         }
@@ -105,15 +115,19 @@ export class Diagram extends owl.Component {
                 dragNodes: false,
             },
         };
+        if (!this.$el.length) {
+            return;
+        }
         const network = await new vis.Network(this.$el[0], data, options);
         let click_handlers = {
             nodes: {},
             edges: {},
         };
-        _.each(fielddata.nodes, (node) => {
+        fielddata.nodes.forEach((node) => {
             click_handlers.nodes[node.id] = node.onclick;
         });
-        _.each(fielddata.edges, (edge) => {
+        
+        fielddata.edges.forEach((edge) => {
             click_handlers.edges[edge.id] = edge.onclick;
         });
 
@@ -168,15 +182,7 @@ export class Diagram extends owl.Component {
     }
 }
 
-
-
-Diagram.template = "diagrams_net.diagrams_net_widget";
-Diagram.supportedTypes = ["text", "html"];
-Diagram.displayName = "Diagram";
-Diagram.defaultProps = {
-};
-Diagram.props = {
-    ...standardFieldProps,
-};
-
-registry.category("fields").add("diagrams_net", Diagram);
+registry.category("fields").add("diagrams_net", {
+    component: Diagram,
+    supportedTypes: ["text", "html"]
+});
