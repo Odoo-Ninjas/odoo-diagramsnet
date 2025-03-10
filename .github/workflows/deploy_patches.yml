@@ -1,19 +1,15 @@
 # .github/workflows/flow1.yml
 name: Deploy fixes to other versions with rebase main
+
 on:
   push:
     branches:
-      - "main"
+      - 17.0
 
 permissions: write-all
 
 jobs:
   deploy-subversions:
-    uses: Odoo-Ninjas/git-workflows/.github/workflows/deploy_to_subversions.yml@v4
-    secrets: inherit
+    uses: Odoo-Ninjas/git-workflows/.github/workflows/deploy_to_subversions.yml@v5
     with:
-      repo_url: git@github.com:Odoo-Ninjas/odoo-diagramsnet.git
-      branches: "15.0:main 16.0:main 17.0:main"
-      
-
-  
+      branches: 18.0:17.0
