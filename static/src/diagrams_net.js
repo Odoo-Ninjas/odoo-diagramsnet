@@ -51,7 +51,7 @@ export class Diagram extends Field {
     }
 
     get context() {
-        return this.props.record.getFieldContext(this.props.name);
+        return this.props.record.field
     }
 
     get model() {
