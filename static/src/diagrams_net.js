@@ -1,4 +1,5 @@
 /** @odoo-module **/
+// test comment in 18
 
 import { loadCSS, loadJS } from "@web/core/assets";
 import { registry } from "@web/core/registry";
