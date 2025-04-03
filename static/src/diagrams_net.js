@@ -1,5 +1,4 @@
 /** @odoo-module **/
-/* global vis */
 
 import { loadCSS, loadJS } from "@web/core/assets";
 import { registry } from "@web/core/registry";
