@@ -16,4 +16,6 @@
     'name': 'diagrams_net',
     'test': [],
     'version': '1.0',
-    'web': True}
+    'web': True,
+    'license': 'AGPL-3',
+}
