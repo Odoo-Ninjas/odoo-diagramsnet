@@ -11,24 +11,26 @@ import { TextField } from '@web/views/fields/text/text_field';
 const { Component, onWillStart, useEffect, useRef } = owl;
 
 export class Diagram extends owl.Component {
+    static template = "diagrams_net.diagrams_net_widget";
+    static displayName = "Diagram";
+    static defaultProps = {
+    };
+    static props = {
+        ...standardFieldProps,
+    };
     setup() {
         this.orm = useService("orm");
         this.action = useService("action");
         this.rootRef = useRef("root_vis");
         this.network = null;
+        this.props = useState(this.props);
         onWillStart(async () => {
             await loadJS("/diagrams_net/static/lib/vis/vis-network.min.js");
             loadCSS("/diagrams_net/static/lib/vis/vis-network.min.css");
         });
         useEffect(() => {
             this.renderNetwork();
-            return () => {
-                if (this.network) {
-                    this.$el.empty();
-                }
-                return this.rootRef.el;
-            };
-        });
+        }, () => [this.props.record]);
     }
 
     get $el() {
@@ -40,7 +42,7 @@ export class Diagram extends owl.Component {
     }
 
     get context() {
-        return this.props.record.getFieldContext(this.props.name);
+        return this.props.record.context;
     }
 
     get model() {
@@ -57,7 +59,9 @@ export class Diagram extends owl.Component {
         if (this.network) {
             this.$el.empty();
         }
-        var fielddata = JSON.parse(this.props.value);
+        const record = this.props.record;
+        const value = record.data[this.props.name];
+        var fielddata = JSON.parse(value || '{"nodes": [], "edges": []}');
         if (!fielddata || !fielddata.nodes.length) {
             return;
         }
@@ -110,10 +114,11 @@ export class Diagram extends owl.Component {
             nodes: {},
             edges: {},
         };
-        _.each(fielddata.nodes, (node) => {
+        fielddata.nodes.forEach((node) => {
             click_handlers.nodes[node.id] = node.onclick;
         });
-        _.each(fielddata.edges, (edge) => {
+        
+        fielddata.edges.forEach((edge) => {
             click_handlers.edges[edge.id] = edge.onclick;
         });
 
@@ -168,15 +173,7 @@ export class Diagram extends owl.Component {
     }
 }
 
-
-
-Diagram.template = "diagrams_net.diagrams_net_widget";
-Diagram.supportedTypes = ["text", "html"];
-Diagram.displayName = "Diagram";
-Diagram.defaultProps = {
-};
-Diagram.props = {
-    ...standardFieldProps,
-};
-
-registry.category("fields").add("diagrams_net", Diagram);
+registry.category("fields").add("diagrams_net", {
+    component: Diagram,
+    supportedTypes: ["text", "html"]
+});
