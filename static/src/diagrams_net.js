@@ -1,49 +1,40 @@
 /** @odoo-module **/
-// test comment in 18
+/* global vis */
 
 import { loadCSS, loadJS } from "@web/core/assets";
 import { registry } from "@web/core/registry";
 import { standardFieldProps } from "@web/views/fields/standard_field_props";
 import { useService } from "@web/core/utils/hooks";
-import { onWillStart, useEffect, useRef } from "@odoo/owl";
-import { Field } from "@web/views/fields/field";
+import { xml, onMounted, onWillUpdateProps, useState } from "@odoo/owl";
+import { TextField } from '@web/views/fields/text/text_field';
 
-export class Diagram extends Field {
+const { Component, onWillStart, useEffect, useRef } = owl;
+
+export class Diagram extends owl.Component {
     static template = "diagrams_net.diagrams_net_widget";
-    static supportedTypes = ["text", "html"];
     static displayName = "Diagram";
     static defaultProps = {
     };
     static props = {
         ...standardFieldProps,
     };
-    
     setup() {
-        super.setup();  
         this.orm = useService("orm");
         this.action = useService("action");
         this.rootRef = useRef("root_vis");
         this.network = null;
+        this.props = useState(this.props);
         onWillStart(async () => {
             await loadJS("/diagrams_net/static/lib/vis/vis-network.min.js");
             loadCSS("/diagrams_net/static/lib/vis/vis-network.min.css");
         });
         useEffect(() => {
             this.renderNetwork();
-            return () => {
-                if (this.network) {
-                    if (this.$el) {
-                        this.$el.innerHTML = "";
-                    }
-                    this.network = null;
-                }
-                return this.$el;
-            };
-        });
+        }, () => [this.props.record]);
     }
 
     get $el() {
-        return this.rootRef.el;
+        return $(this.rootRef.el);
     }
 
     get resId() {
@@ -51,7 +42,7 @@ export class Diagram extends Field {
     }
 
     get context() {
-        return this.props.record.field
+        return this.props.record.context;
     }
 
     get model() {
@@ -68,11 +59,9 @@ export class Diagram extends Field {
         if (this.network) {
             this.$el.innerHTML = "";
         }
-        if (!this.props?.record?.data?.diagram_content) {
-            console.error("Failed to render network. this.props.record.data.diagram_content undefined")
-            return
-        }
-        var fielddata = JSON.parse(this.props.record.data.diagram_content);
+        const record = this.props.record;
+        const value = record.data[this.props.name];
+        var fielddata = JSON.parse(value || '{"nodes": [], "edges": []}');
         if (!fielddata || !fielddata.nodes.length) {
             return;
         }
@@ -81,7 +70,7 @@ export class Diagram extends Field {
             edges: new vis.DataSet(fielddata.edges),
         };
         const options = {
-            // Fix the seed to always have the same result for the same graph
+            // Fix the seed to have always the same result for the same graph
             layout: {
                 randomSeed: 1,
                 improvedLayout: false,
@@ -120,7 +109,7 @@ export class Diagram extends Field {
                 dragNodes: false,
             },
         };
-        const network = await new vis.Network(this.$el, data, options);
+        const network = await new vis.Network(this.$el[0], data, options);
         let click_handlers = {
             nodes: {},
             edges: {},
@@ -128,6 +117,7 @@ export class Diagram extends Field {
         fielddata.nodes.forEach((node) => {
             click_handlers.nodes[node.id] = node.onclick;
         });
+        
         fielddata.edges.forEach((edge) => {
             click_handlers.edges[edge.id] = edge.onclick;
         });
@@ -183,8 +173,7 @@ export class Diagram extends Field {
     }
 }
 
-export const diagram = {
+registry.category("fields").add("diagrams_net", {
     component: Diagram,
-}
-
-registry.category("fields").add("diagrams_net", diagram);
+    supportedTypes: ["text", "html"]
+});
