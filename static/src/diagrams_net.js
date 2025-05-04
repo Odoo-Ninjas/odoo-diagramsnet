@@ -7,8 +7,9 @@ import { standardFieldProps } from "@web/views/fields/standard_field_props";
 import { useService } from "@web/core/utils/hooks";
 import { xml, onMounted, onWillUpdateProps, useState } from "@odoo/owl";
 import { TextField } from '@web/views/fields/text/text_field';
+import { useRecordObserver } from "@web/model/relational_model/utils";
 
-const { Component, onWillStart, useEffect, useRef } = owl;
+const { Component, onWillStart, useEffect, useRef, onWillRender } = owl;
 
 export class Diagram extends owl.Component {
     static template = "diagrams_net.diagrams_net_widget";
@@ -23,14 +24,19 @@ export class Diagram extends owl.Component {
         this.action = useService("action");
         this.rootRef = useRef("root_vis");
         this.network = null;
-        this.props = useState(this.props);
         onWillStart(async () => {
             await loadJS("/diagrams_net/static/lib/vis/vis-network.min.js");
             loadCSS("/diagrams_net/static/lib/vis/vis-network.min.css");
+            console.log("Start");
+        });
+        onWillRender(() => {
+            console.log("Will render");
+            this.renderNetwork();
         });
         useEffect(() => {
+            console.log("Use effect");
             this.renderNetwork();
-        }, () => [this.props.record]);
+        }, () => [this.props]);
     }
 
     get $el() {
@@ -109,6 +115,9 @@ export class Diagram extends owl.Component {
                 dragNodes: false,
             },
         };
+        if (!this.$el.length) {
+            return;
+        }
         const network = await new vis.Network(this.$el[0], data, options);
         let click_handlers = {
             nodes: {},
