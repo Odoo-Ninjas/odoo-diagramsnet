@@ -31,7 +31,7 @@ export class Diagram extends owl.Component {
         useEffect(() => {
             this.renderNetwork();
         }, () => [this.props.record]);
-        onWillUpdateProps(() => {
+        onWillRender(() => {
             this.renderNetwork();
         });
     }
