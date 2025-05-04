@@ -8,7 +8,7 @@ import { useService } from "@web/core/utils/hooks";
 import { xml, onMounted, onWillUpdateProps, useState } from "@odoo/owl";
 import { TextField } from '@web/views/fields/text/text_field';
 
-const { Component, onWillStart, useEffect, useRef } = owl;
+const { Component, onWillStart, useEffect, useRef, onWillRender } = owl;
 
 export class Diagram extends owl.Component {
     static template = "diagrams_net.diagrams_net_widget";
