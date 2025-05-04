@@ -31,10 +31,13 @@ export class Diagram extends owl.Component {
         useEffect(() => {
             this.renderNetwork();
         }, () => [this.props.record]);
+        onWillUpdateProps(() => {
+            this.renderNetwork();
+        });
     }
 
     get $el() {
-        return $(this.rootRef.el);
+        return this.rootRef.el;
     }
 
     get resId() {
@@ -109,7 +112,10 @@ export class Diagram extends owl.Component {
                 dragNodes: false,
             },
         };
-        const network = await new vis.Network(this.$el[0], data, options);
+        if (!this.$el) {
+            return;
+        }
+        const network = await new vis.Network(this.$el, data, options);
         let click_handlers = {
             nodes: {},
             edges: {},
