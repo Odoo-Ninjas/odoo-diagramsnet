@@ -1,10 +1,13 @@
-{   'application': False,
-    'assets': {   'web.assets_backend': [   'diagrams_net/static/src/**/*',
+{
+    'application': False,
+    'assets': {   'web.assets_backend': [
                                             'diagrams_net/static/lib/vis/vis-network.min.css',
                                             'diagrams_net/static/src/diagrams_net.scss',
                                             'diagrams_net/static/lib/vis/vis-network.min.js',
-                                            'diagrams_net/static/src/diagrams_net.js'],
-                  'web.assets_qweb': [   'diagrams_net/static/src/diagrams_net.xml']},
+                                            'diagrams_net/static/src/diagrams_net.js',
+                                            'diagrams_net/static/src/diagrams_net.xml'  
+                                        ]
+              },
     'author': 'Marc Wimmer (marc@itewimmer.de)',
     'data': [],
     'demo': [],
@@ -13,4 +16,8 @@
     'name': 'diagrams_net',
     'test': [],
     'version': '1.0',
-    'web': True}
+
+    'web': True,
+    'license': 'AGPL-3',
+}
+

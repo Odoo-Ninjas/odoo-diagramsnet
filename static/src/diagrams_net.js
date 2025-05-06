@@ -1,17 +1,25 @@
 /** @odoo-module **/
-/* global vis */
+// test comment in 18
 
 import { loadCSS, loadJS } from "@web/core/assets";
 import { registry } from "@web/core/registry";
 import { standardFieldProps } from "@web/views/fields/standard_field_props";
 import { useService } from "@web/core/utils/hooks";
-import { xml, onMounted, onWillUpdateProps, useState } from "@odoo/owl";
-import { TextField } from '@web/views/fields/text/text_field';
+import { onWillStart, useEffect, useRef } from "@odoo/owl";
+import { Field } from "@web/views/fields/field";
 
-const { Component, onWillStart, useEffect, useRef } = owl;
-
-export class Diagram extends owl.Component {
+export class Diagram extends Field {
+    static template = "diagrams_net.diagrams_net_widget";
+    static supportedTypes = ["text", "html"];
+    static displayName = "Diagram";
+    static defaultProps = {
+    };
+    static props = {
+        ...standardFieldProps,
+    };
+    
     setup() {
+        super.setup();  
         this.orm = useService("orm");
         this.action = useService("action");
         this.rootRef = useRef("root_vis");
@@ -24,15 +32,18 @@ export class Diagram extends owl.Component {
             this.renderNetwork();
             return () => {
                 if (this.network) {
-                    this.$el.empty();
+                    if (this.$el) {
+                        this.$el.innerHTML = "";
+                    }
+                    this.network = null;
                 }
-                return this.rootRef.el;
+                return this.$el;
             };
         });
     }
 
     get $el() {
-        return $(this.rootRef.el);
+        return this.rootRef.el;
     }
 
     get resId() {
@@ -40,7 +51,7 @@ export class Diagram extends owl.Component {
     }
 
     get context() {
-        return this.props.record.getFieldContext(this.props.name);
+        return this.props.record.field
     }
 
     get model() {
@@ -55,9 +66,13 @@ export class Diagram extends owl.Component {
 
     async renderNetwork() {
         if (this.network) {
-            this.$el.empty();
+            this.$el.innerHTML = "";
         }
-        var fielddata = JSON.parse(this.props.value);
+        if (!this.props?.record?.data?.diagram_content) {
+            console.error("Failed to render network. this.props.record.data.diagram_content undefined")
+            return
+        }
+        var fielddata = JSON.parse(this.props.record.data.diagram_content);
         if (!fielddata || !fielddata.nodes.length) {
             return;
         }
@@ -66,7 +81,7 @@ export class Diagram extends owl.Component {
             edges: new vis.DataSet(fielddata.edges),
         };
         const options = {
-            // Fix the seed to have always the same result for the same graph
+            // Fix the seed to always have the same result for the same graph
             layout: {
                 randomSeed: 1,
                 improvedLayout: false,
@@ -105,15 +120,15 @@ export class Diagram extends owl.Component {
                 dragNodes: false,
             },
         };
-        const network = await new vis.Network(this.$el[0], data, options);
+        const network = await new vis.Network(this.$el, data, options);
         let click_handlers = {
             nodes: {},
             edges: {},
         };
-        _.each(fielddata.nodes, (node) => {
+        fielddata.nodes.forEach((node) => {
             click_handlers.nodes[node.id] = node.onclick;
         });
-        _.each(fielddata.edges, (edge) => {
+        fielddata.edges.forEach((edge) => {
             click_handlers.edges[edge.id] = edge.onclick;
         });
 
@@ -168,15 +183,8 @@ export class Diagram extends owl.Component {
     }
 }
 
+export const diagram = {
+    component: Diagram,
+}
 
-
-Diagram.template = "diagrams_net.diagrams_net_widget";
-Diagram.supportedTypes = ["text", "html"];
-Diagram.displayName = "Diagram";
-Diagram.defaultProps = {
-};
-Diagram.props = {
-    ...standardFieldProps,
-};
-
-registry.category("fields").add("diagrams_net", Diagram);
+registry.category("fields").add("diagrams_net", diagram);
