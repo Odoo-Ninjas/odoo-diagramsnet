@@ -13,5 +13,6 @@ jobs:
     uses: Odoo-Ninjas/git-workflows/.github/workflows/deploy_to_subversions.yml@v9
     with:
       branches: 12.0:13.0
+      runner_label: self-hosted
     secrets:
       SSH_PRIVATE_KEY:  ${{ secrets.SSH_PRIVATE_KEY }}
