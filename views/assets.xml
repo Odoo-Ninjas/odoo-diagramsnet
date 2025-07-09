@@ -1,7 +1,0 @@
-<odoo><data>
-    <template id="assets_backend" inherit_id="web.assets_backend">
-        <xpath expr="." position="inside">
-        <link rel="stylesheet" href="/diagrams_net/static/css/diagrams_net.scss"/><script type="text/javascript" src="/diagrams_net/static/src/js/diagrams_net.js"/></xpath>
-    </template>
-    </data>
-    </odoo>
