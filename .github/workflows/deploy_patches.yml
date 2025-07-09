@@ -4,14 +4,14 @@ name: Deploy fixes to other versions with rebase main
 on:
   push:
     branches:
-      - 17.0
+      - main
 
 permissions: write-all
 
 jobs:
   deploy-subversions:
-    uses: Odoo-Ninjas/git-workflows/.github/workflows/deploy_to_subversions.yml@v5
+    uses: Odoo-Ninjas/git-workflows/.github/workflows/deploy_to_subversions.yml@v6
     with:
-      branches: 18.0:17.0
+      branches: 15.0:main 16.0:main 17.0:main
     secrets:
       SSH_PRIVATE_KEY:  ${{ secrets.SSH_PRIVATE_KEY }}
