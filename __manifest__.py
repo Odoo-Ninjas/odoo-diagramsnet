@@ -19,5 +19,5 @@
     'version': '1.0',
     'web': True,
     'license': 'LGPL-3',
-    'url': 'https://github.com/Odoo-Ninjas/odoo-diagramsnet'
+    'scmUrl': 'https://github.com/Odoo-Ninjas/odoo-diagramsnet'
 }
